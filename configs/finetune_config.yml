@@ -1,0 +1,4 @@
+base_model_name: "microsoft/Phi-3-mini-4k-instruct"
+base_model_path: ""
+resume_from_checkpoint: ""
+output_dir : "tmp/model-output"

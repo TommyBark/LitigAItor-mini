@@ -1,9 +1,10 @@
+import os
 import random
 import warnings
 
 import torch
 from datasets import load_dataset
-from torch.utils.data import DataLoader, IterableDataset
+from torch.utils.data import IterableDataset
 from tqdm import tqdm
 
 
@@ -103,7 +104,9 @@ class ConstantLengthDataset(IterableDataset):
                     else:
                         more_examples = False
                         break
-            tokenized_inputs = self.tokenizer(buffer, truncation=False)["input_ids"]
+            tokenized_inputs = self.tokenizer(
+                buffer, truncation=False, max_length=self.seq_length
+            )["input_ids"]
             all_token_ids = []
             for tokenized_input in tokenized_inputs:
                 all_token_ids.extend(tokenized_input + [self.concat_token_id])
@@ -122,65 +125,22 @@ class ConstantLengthDataset(IterableDataset):
                 }
 
 
-def build_finetune_dataset(
-    tokenizer, dataset_name="/root/AISMicroOrg/stack-exchange-paired_micro", num_proc=24
-) -> DataLoader:
-    """
-    Build dataset for training. This builds the dataset from `load_dataset`, one should
-    customize this function to train the model on its own dataset.
-
-    Args:
-        dataset_name (`str`):
-            The name of the dataset to be loaded.
-
-    Returns:
-        dataloader (`torch.utils.data.DataLoader`):
-            The dataloader for the dataset.
-    """
-
-    # load imdb with datasets
-    ds = load_dataset(dataset_name, data_dir="data/rl", split="train")
-    original_columns = ds.column_names
-
-    def preprocess_function(examples):
-        new_examples = {
-            "query": [],
-            "input_ids": [],
-        }
-        for question in examples["question"]:
-            query = "Question: " + question + "\n\nAnswer: "
-            tokenized_question = tokenizer(query, truncation=True, max_length=2048)
-            new_examples["query"].append(query)
-            new_examples["input_ids"].append(tokenized_question["input_ids"])
-
-        return new_examples
-
-    ds = ds.map(
-        preprocess_function,
-        batched=True,
-        num_proc=num_proc,
-        remove_columns=original_columns,
-    )
-    ds = ds.filter(lambda x: len(x["input_ids"]) < 512, batched=False)
-
-    ds.set_format(type="torch")
-    return ds
-
-
-def create_datasets(tokenizer, args):
+def create_datasets(
+    tokenizer, dataset_name, split, streaming=True, seq_length=1024, size_valid_set=100
+):
     dataset = load_dataset(
-        args.dataset_name,
-        data_dir=args.subset,
-        split=args.split,
-        use_auth_token=True,
-        num_proc=args.num_workers if not args.streaming else None,
-        streaming=args.streaming,
+        dataset_name,
+        split=split,
+        num_proc=None,
+        streaming=streaming,
+        token=os.environ.get("HF_TOKEN"),
     )
-    if args.streaming:
+    if streaming:
+        shuffle_buffer = 4000
         print("Loading the dataset in streaming mode")
-        valid_data = dataset.take(args.size_valid_set)
-        train_data = dataset.skip(args.size_valid_set)
-        train_data = train_data.shuffle(buffer_size=args.shuffle_buffer, seed=None)
+        valid_data = dataset.take(size_valid_set)
+        train_data = dataset.skip(size_valid_set)
+        train_data = train_data.shuffle(buffer_size=shuffle_buffer, seed=None)
     else:
         dataset = dataset.train_test_split(test_size=0.005, seed=None)
         train_data = dataset["train"]
@@ -197,7 +157,7 @@ def create_datasets(tokenizer, args):
         train_data,
         formatting_func=lambda x: x["document"],
         infinite=True,
-        seq_length=args.seq_length,
+        seq_length=seq_length,
         chars_per_token=chars_per_token,
     )
     valid_dataset = ConstantLengthDataset(
@@ -205,13 +165,13 @@ def create_datasets(tokenizer, args):
         valid_data,
         formatting_func=lambda x: x["document"],
         infinite=False,
-        seq_length=args.seq_length,
+        seq_length=seq_length,
         chars_per_token=chars_per_token,
     )
     return train_dataset, valid_dataset
 
 
-def chars_token_ratio(dataset, tokenizer, nb_examples=400):
+def chars_token_ratio(dataset, tokenizer, nb_examples=300):
     """
     Estimate the average number of characters per token in the dataset.
     """

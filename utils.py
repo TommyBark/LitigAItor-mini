@@ -1,10 +1,26 @@
+import os
 from dataclasses import dataclass, field
 from typing import Optional
-from transformers import (
-    TrainingArguments,
-)
-from peft import LoraConfig
 
+import yaml
+from peft import LoraConfig
+from transformers import (
+    TrainingArguments, TrainerCallback
+)
+
+
+def load_config(config_path):
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"The config file {config_path} does not exist.")
+    with open(config_path, "r") as file:
+        return yaml.safe_load(file)
+
+class ProfilerCallback(TrainerCallback):
+    def __init__(self, profiler):
+        self.profiler = profiler
+
+    def on_step_end(self, *args, **kwargs):
+        self.profiler.step()
 
 @dataclass
 class FinetuningArguments:
@@ -55,7 +71,7 @@ class FinetuningArguments:
             remove_unused_columns=False,
             run_name="sft_llama2",
             report_to="wandb",
-            save_total_limit=10
+            save_total_limit=10,
         )
     )
 

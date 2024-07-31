@@ -1,26 +1,35 @@
-import torch
-from transformers import BitsAndBytesConfig, LlamaForCausalLM, LlamaTokenizer, 
 import os
-from trl import SFTTrainer
 from contextlib import nullcontext
+
+import torch
+from huggingface_hub import HfApi
+from peft import (
+    LoraConfig,
+    TaskType,
+    get_peft_model,
+    prepare_model_for_kbit_training,
+)
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
+    TrainingArguments,
+)
+from trl import SFTTrainer
+
 from dataset import create_datasets
-from utils import FinetuningArguments
+from utils import ProfilerCallback, load_config
 
-import yaml
-
-def load_config(config_path):
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"The config file {config_path} does not exist.")
-    with open(config_path, 'r') as file:
-        return yaml.safe_load(file)
-
-config_path = "../configs/finetune_config.yml"
+config_path = "./configs/finetune_config.yml"
 
 config = load_config(config_path)
 
-model_path = config["base_model_path"]
+DEBUG = config["DEBUG"]
+
+
+base_model_name = config["base_model_name"]
 output_dir = config["output_dir"]
-resume_from_checkpoint = config["resume_from_checkpoint"]
+resume_from_checkpoint = config["resume_from_checkpoint"] or None
 
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
@@ -28,33 +37,36 @@ bnb_config = BitsAndBytesConfig(
     bnb_4bit_compute_dtype=torch.bfloat16,
 )
 
-if os.path.isdir(model_path):
-    tokenizer = LlamaTokenizer.from_pretrained(model_path)
-    model = LlamaForCausalLM.from_pretrained(
-        model_path,
-        device_map="auto",
-        torch_dtype=torch.float16,
-        quantization_config=bnb_config,
-    )
-else:
-    base_model_name = config["base_model_name"]
-    tokenizer = LlamaTokenizer.from_pretrained(
-        base_model_name, token=os.environ.get("HF_TOKEN")
-    )
-    model = LlamaForCausalLM.from_pretrained(
-        base_model_name,
-        token=os.environ.get("HF_TOKEN"),
-        device_map="auto",
-        torch_dtype=torch.float16,
-        quantization_config=bnb_config,
-    )
+peft_config = LoraConfig(
+    task_type=TaskType.CAUSAL_LM,
+    inference_mode=False,
+    r=8,
+    lora_alpha=32,
+    lora_dropout=0.1,
+    target_modules="all-linear",
+)
 
-tokenizer.pad_token = tokenizer.eos_token
-tokenizer.padding_side = "right"  # Fix weird overflow issue with fp16 training
-model.config.use_cache = False
+tokenizer = AutoTokenizer.from_pretrained(base_model_name, trust_remote_code=True)
+tokenizer.padding_side = "right"
+model = AutoModelForCausalLM.from_pretrained(
+    base_model_name,
+    trust_remote_code=True,
+    quantization_config=bnb_config,
+    attn_implementation="flash_attention_2",
+    low_cpu_mem_usage=True,
+)
+if DEBUG:
+    print("Model loaded")
+
+
+model = prepare_model_for_kbit_training(model)
+model = get_peft_model(model, peft_config)
+model.gradient_checkpointing_enable()
+if DEBUG:
+    model.print_trainable_parameters()
 
 # profiler
-enable_profiler = False
+enable_profiler = True
 
 
 # Set up profiler
@@ -79,37 +91,69 @@ else:
     profiler = nullcontext()
 
 
-script_args = FinetuningArguments(model_name = config["base_model_name"])
-peft_config = script_args.peft_config
-training_args = script_args.training_args
+train_ds, eval_ds = create_datasets(
+    tokenizer,
+    config["dataset_name"],
+    config["dataset_split"],
+    streaming=True,
+    seq_length=config["seq_length"],
+    size_valid_set=100,
+)
+if DEBUG:
+    print("Datasets created")
+
+training_config = {
+    "bf16": True,
+    "do_eval": False,
+    "learning_rate": 1.0e-04,
+    "log_level": "error",
+    "logging_steps": 100,
+    "logging_strategy": "steps",
+    "lr_scheduler_type": "cosine",
+    "num_train_epochs": 1,
+    "output_dir": output_dir,
+    "overwrite_output_dir": False,
+    "per_device_eval_batch_size": 1,
+    "per_device_train_batch_size": 1,
+    "remove_unused_columns": False,
+    "save_steps": 100,
+    "save_total_limit": 4,
+    "seed": 0,
+    "gradient_checkpointing": True,
+    "gradient_checkpointing_kwargs": {"use_reentrant": False},
+    "gradient_accumulation_steps": 1,
+    "warmup_ratio": 0.2,
+    "report_to": "wandb",
+    "run_name": "ft-phi-3-mini-4k-instruct",
+    "max_steps": 1800,
+    "push_to_hub": True,
+}
 
 
-train_dataset, eval_dataset = create_datasets(tokenizer, script_args)
-#ds = build_finetune_dataset(tokenizer)
+if DEBUG:
+    training_config["logging_steps"] = 5
+    training_config["max_steps"] = 10
+    training_config["save_steps"] = 10
+    training_config["output_dir"] = "./debug"
+    training_config["report_to"] = "none"
+    training_config["push_to_hub"] = False
+    training_config["log_level"] = "debug"
+    resume_from_checkpoint = None
 
-
-def get_latest_checkpoint_path(output_dir):
-    checkpoint_paths = [
-        os.path.join(output_dir, f)
-        for f in os.listdir(output_dir)
-        if f.startswith("checkpoint")
-    ]
-    latest_checkpoint_path = max(checkpoint_paths, key=os.path.getctime)
-    return latest_checkpoint_path
+training_args = TrainingArguments(**training_config)
 
 
 with profiler:
     trainer = SFTTrainer(
         model=model,
-        train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
-        peft_config=peft_config,
-        packing=script_args.packing,
-        max_seq_length=None,
+        train_dataset=train_ds,
+        eval_dataset=eval_ds,
         tokenizer=tokenizer,
         args=training_args,
+        peft_config=peft_config,
         callbacks=[profiler_callback] if enable_profiler else [],
+        max_seq_length=config["seq_length"],
     )
-    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
+    train_result = trainer.train(resume_from_checkpoint=resume_from_checkpoint)
 
-trainer.save_model(script_args.training_args.output_dir)
+trainer.save_model(training_config["output_dir"])

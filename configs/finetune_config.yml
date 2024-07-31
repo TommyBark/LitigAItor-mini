@@ -1,4 +1,7 @@
 base_model_name: "microsoft/Phi-3-mini-4k-instruct"
-base_model_path: ""
-resume_from_checkpoint: ""
-output_dir : "tmp/model-output"
+resume_from_checkpoint: "Phi-3-mini-4k-instruct-qlora-law/checkpoint-1500"
+output_dir : "Phi-3-mini-4k-instruct-qlora-law"
+DEBUG: True
+dataset_name: "HFforLegal/case-law"
+dataset_split: "us"
+seq_length: 1024

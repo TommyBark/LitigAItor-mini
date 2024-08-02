@@ -13,6 +13,7 @@ peft = "*"
 trl = "*"
 autoawq = "*"
 bitsandbytes = "*"
+gradio = "*"
 
 [dev-packages]
 ipykernel = "*"

@@ -8,7 +8,7 @@ from transformers import (
 from utils import load_config
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
-config = load_config("./configs/model_config.yml")
+config = load_config("../configs/model_config.yml")
 
 model_repo = config["FINETUNED_MODEL_REPO"]
 original_model = config["ORIGINAL_MODEL_REPO"]

@@ -17,6 +17,7 @@ gradio = "*"
 
 [dev-packages]
 ipykernel = "*"
+nltk = "*"
 
 [requires]
 python_version = "3.10"

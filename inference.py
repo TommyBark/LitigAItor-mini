@@ -25,10 +25,10 @@ model = AutoModelForCausalLM.from_pretrained(
 tokenizer = AutoTokenizer.from_pretrained(original_model)
 model.eval()
 
-#model.disable_adapters()
+# model.disable_adapters()
 
 
-def simple_completion(text, max_length=100):
+def simple_completion(text:str, max_length:int=100)-> str:
     input_ids = tokenizer.encode(text, return_tensors="pt").to(device)
     output = model.generate(input_ids, max_length=max_length)
     return tokenizer.decode(output[0], skip_special_tokens=False)

@@ -1,19 +1,47 @@
 import os
 from dataclasses import dataclass, field
 from typing import Optional
-
+import torch
 import yaml
 from peft import LoraConfig
+from transformers import TrainerCallback, TrainingArguments
 from transformers import (
-    TrainingArguments, TrainerCallback
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    BitsAndBytesConfig,
 )
 
-
-def load_config(config_path):
+def load_config(config_path: str) -> dict:
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"The config file {config_path} does not exist.")
     with open(config_path, "r") as file:
         return yaml.safe_load(file)
+
+
+def format_message_phi(user_message: str, system_message:Optional[str]=None) -> str:
+    if system_message is not None:
+        return f"<|system|>\n{system_message}<|end|>\n<|user|>\n{user_message}<|end|>\n<|assistant|>\n"
+    return f"\n<|user|>\n{user_message}<|end|>\n<|assistant|>\n"
+
+def load_model_and_tokenizer(config_path: str = "./configs/model_config.yml") -> tuple:
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    config = load_config(config_path)
+
+    model_repo = config["FINETUNED_MODEL_REPO"]
+    original_model = config["ORIGINAL_MODEL_REPO"]
+
+
+    bnb_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16,
+    )
+    model = AutoModelForCausalLM.from_pretrained(
+        model_repo, quantization_config=bnb_config, adapter_kwargs={"revision": "main"}
+    )
+    tokenizer = AutoTokenizer.from_pretrained(original_model)
+    model.eval()
+    return model, tokenizer, device
 
 class ProfilerCallback(TrainerCallback):
     def __init__(self, profiler):
@@ -21,6 +49,8 @@ class ProfilerCallback(TrainerCallback):
 
     def on_step_end(self, *args, **kwargs):
         self.profiler.step()
+
+
 
 @dataclass
 class FinetuningArguments:

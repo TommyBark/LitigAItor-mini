@@ -127,6 +127,7 @@ training_config = {
     "run_name": "ft-phi-3-mini-4k-instruct",
     "max_steps": 1800,
     "push_to_hub": True,
+    "evaluation_strategy":"step"
 }
 
 

@@ -19,6 +19,9 @@ prefect = "*"
 [dev-packages]
 ipykernel = "*"
 nltk = "*"
+localstack = "*"
+terraform-local = "*"
+awscli-local = {extras = ["ver1"], version = "*"}
 
 [requires]
 python_version = "3.10"

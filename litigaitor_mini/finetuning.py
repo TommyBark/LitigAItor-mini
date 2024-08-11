@@ -1,8 +1,8 @@
-import os
+import importlib.util
 from contextlib import nullcontext
 
 import torch
-from huggingface_hub import HfApi
+from dataset import create_datasets
 from peft import (
     LoraConfig,
     TaskType,
@@ -16,20 +16,23 @@ from transformers import (
     TrainingArguments,
 )
 from trl import SFTTrainer
+from utils import ProfilerCallback, get_latest_checkpoint, load_config, update_config
 
-from dataset import create_datasets
-from utils import ProfilerCallback, load_config
+finetuning_config_path = "../configs/finetune_config.yml"
+data_config_path = "../configs/dataset_config.yml"
 
-config_path = "./configs/finetune_config.yml"
-
-config = load_config(config_path)
+config = load_config(finetuning_config_path)
+data_config = load_config(data_config_path)
 
 DEBUG = config["DEBUG"]
 
-
 base_model_name = config["base_model_name"]
 output_dir = config["output_dir"]
-resume_from_checkpoint = config["resume_from_checkpoint"] or None
+if config["resume_from_checkpoint"]:
+    resume_from_checkpoint = get_latest_checkpoint(output_dir)
+else:
+    resume_from_checkpoint = False
+
 
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
@@ -48,11 +51,16 @@ peft_config = LoraConfig(
 
 tokenizer = AutoTokenizer.from_pretrained(base_model_name, trust_remote_code=True)
 tokenizer.padding_side = "right"
+
+attention = (
+    "eager" if importlib.util.find_spec("flash_attn") is None else "flash_attention_2"
+)
+
 model = AutoModelForCausalLM.from_pretrained(
     base_model_name,
     trust_remote_code=True,
     quantization_config=bnb_config,
-    attn_implementation="flash_attention_2",
+    attn_implementation=attention,
     low_cpu_mem_usage=True,
 )
 if DEBUG:
@@ -90,12 +98,13 @@ if enable_profiler:
 else:
     profiler = nullcontext()
 
-
+data_split = f"{data_config['dataset_split']}[{int(data_config['last_row_index'])}:{int(data_config['last_row_index']) + int(config['finetune_steps'])}]"
+print(data_split)
 train_ds, eval_ds = create_datasets(
     tokenizer,
-    config["dataset_name"],
-    config["dataset_split"],
-    streaming=True,
+    data_config["dataset_name"],
+    data_split,
+    streaming=False,
     seq_length=config["seq_length"],
     size_valid_set=100,
 )
@@ -116,18 +125,18 @@ training_config = {
     "per_device_eval_batch_size": 1,
     "per_device_train_batch_size": 1,
     "remove_unused_columns": False,
-    "save_steps": 100,
+    "save_steps": config["finetune_steps"],
     "save_total_limit": 4,
     "seed": 0,
     "gradient_checkpointing": True,
     "gradient_checkpointing_kwargs": {"use_reentrant": False},
     "gradient_accumulation_steps": 1,
     "warmup_ratio": 0.2,
-    "report_to": "wandb",
+    #    "report_to": "wandb",
     "run_name": "ft-phi-3-mini-4k-instruct",
-    "max_steps": 1800,
+    "max_steps": config["max_steps"],
     "push_to_hub": True,
-    "evaluation_strategy":"step"
+    "evaluation_strategy": "steps",
 }
 
 
@@ -158,3 +167,13 @@ with profiler:
     train_result = trainer.train(resume_from_checkpoint=resume_from_checkpoint)
 
 trainer.save_model(training_config["output_dir"])
+
+# update configs
+update_config(
+    data_config_path,
+    "last_row_index",
+    data_config["last_row_index"] + config["finetune_steps"],
+)
+update_config(
+    finetuning_config_path, "max_steps", config["max_steps"] + config["finetune_steps"]
+)

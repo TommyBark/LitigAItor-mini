@@ -1,0 +1,4 @@
+dataset_name: HFforLegal/case-law
+dataset_sha: c4da079afda86db318046baf9b35d5e1d5ea5a1
+dataset_split: us
+last_row_index: 420

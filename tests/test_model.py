@@ -7,7 +7,7 @@ from transformers import (
     BitsAndBytesConfig,
 )
 
-from utils import format_message_phi, load_config
+from litigaitor_mini.utils import format_message_phi, load_config
 
 with open("./tests/test_questions.json", "r") as f:
     questions = json.load(f)["Questions"]

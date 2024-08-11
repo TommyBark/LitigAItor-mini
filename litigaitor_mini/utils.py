@@ -1,15 +1,19 @@
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Optional
+
 import torch
 import yaml
 from peft import LoraConfig
-from transformers import TrainerCallback, TrainingArguments
 from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     BitsAndBytesConfig,
+    TrainerCallback,
+    TrainingArguments,
 )
+
 
 def load_config(config_path: str) -> dict:
     if not os.path.exists(config_path):
@@ -18,10 +22,20 @@ def load_config(config_path: str) -> dict:
         return yaml.safe_load(file)
 
 
-def format_message_phi(user_message: str, system_message:Optional[str]=None) -> str:
+def update_config(config_path: str, key: str, new_value: str) -> None:
+    with open(config_path, "r") as f:
+        config = yaml.safe_load(f)
+    config[key] = new_value
+    with open(config_path, "w") as f:
+        yaml.safe_dump(config, f)
+    print(f"Updated the {key} field in the config file.")
+
+
+def format_message_phi(user_message: str, system_message: Optional[str] = None) -> str:
     if system_message is not None:
         return f"<|system|>\n{system_message}<|end|>\n<|user|>\n{user_message}<|end|>\n<|assistant|>\n"
     return f"\n<|user|>\n{user_message}<|end|>\n<|assistant|>\n"
+
 
 def load_model_and_tokenizer(config_path: str = "./configs/model_config.yml") -> tuple:
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
@@ -29,7 +43,6 @@ def load_model_and_tokenizer(config_path: str = "./configs/model_config.yml") ->
 
     model_repo = config["FINETUNED_MODEL_REPO"]
     original_model = config["ORIGINAL_MODEL_REPO"]
-
 
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True,
@@ -43,13 +56,30 @@ def load_model_and_tokenizer(config_path: str = "./configs/model_config.yml") ->
     model.eval()
     return model, tokenizer, device
 
+
+def get_latest_checkpoint(output_dir):
+
+    checkpoints = [
+        d
+        for d in os.listdir(output_dir)
+        if os.path.isdir(os.path.join(output_dir, d)) and re.match(r"checkpoint-\d+", d)
+    ]
+
+    if not checkpoints:
+        return None  # No checkpoints found
+
+    checkpoints.sort(key=lambda x: int(re.findall(r"\d+", x)[0]), reverse=True)
+
+    # Return the path to the latest checkpoint
+    return os.path.join(output_dir, checkpoints[0])
+
+
 class ProfilerCallback(TrainerCallback):
     def __init__(self, profiler):
         self.profiler = profiler
 
     def on_step_end(self, *args, **kwargs):
         self.profiler.step()
-
 
 
 @dataclass

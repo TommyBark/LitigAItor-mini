@@ -1,37 +1,32 @@
 # main.tf
 
 provider "aws" {
-  region                      = "us-west-1"
-  access_key                  = "test"
-  skip_credentials_validation = true
-  skip_metadata_api_check     = true
-
-#   endpoints {
-#     s3    = "http://localhost:4566"
-#     dynamodb = "http://localhost:4566"
-#   }
+  region = var.region
 }
 
-resource "aws_s3_bucket" "mlflow_artifact_bucket" {
-  bucket = "mlflow-artifacts"
-  force_destroy = true
+module "vpc" {
+  source = "./modules/vpc"
 }
 
-resource "aws_dynamodb_table" "mlflow_experiment_table" {
-  name         = "mlflow-experiments"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "experiment_id"
-
-  attribute {
-    name = "experiment_id"
-    type = "S"
-  }
+module "s3" {
+  source = "./modules/s3"
+  s3_bucket_name = var.s3_bucket_name
 }
 
-output "bucket_name" {
-  value = aws_s3_bucket.mlflow_artifact_bucket.bucket
+module "dynamodb" {
+  source = "./modules/dynamodb"
+  dynamodb_table_name = var.dynamodb_table_name
 }
 
-output "dynamodb_table_name" {
-  value = aws_dynamodb_table.mlflow_experiment_table.name
+module "ec2" {
+  source = "./modules/ec2"
+  vpc_id            = module.vpc.vpc_id
+  subnet_id         = module.vpc.subnet_id
+  security_group_id = module.vpc.security_group_id
+  s3_bucket_name    = module.s3.bucket_name
+  dynamodb_table_name = module.dynamodb.dynamodb_table_name
+}
+
+output "mlflow_server_public_ip" {
+  value = module.ec2.mlflow_server_public_ip
 }

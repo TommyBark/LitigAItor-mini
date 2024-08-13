@@ -1,4 +1,4 @@
-DEBUG: false
+DEBUG: 2
 base_model_name: microsoft/Phi-3-mini-4k-instruct
 finetune_steps: 100
 max_steps: 300

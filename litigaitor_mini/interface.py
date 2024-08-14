@@ -11,6 +11,7 @@ from transformers import (
     TextIteratorStreamer,
 )
 
+from litigaitor_mini.rag import RAGDummy
 from litigaitor_mini.utils import load_config, load_model_and_tokenizer
 
 config_path = "../configs/model_config.yml"
@@ -21,6 +22,9 @@ system_message = config["SYSTEM_MESSAGE"]
 model, tokenizer, device = load_model_and_tokenizer(config_path)
 model.eval()
 # model.disable_adapters()
+
+rag = RAGDummy(config["RAG_SUFFIX"])
+rag.load_documents()
 
 
 class StopOnTokens(StoppingCriteria):
@@ -36,7 +40,8 @@ class StopOnTokens(StoppingCriteria):
 
 def predict(message, history):
     print(history)
-    history_transformer_format = history + [[message, ""]]
+    rag_suffix = rag.generate_suffix_prompt(message, top_k=3)
+    history_transformer_format = history + [[message + rag_suffix, ""]]
     stop = StopOnTokens()
 
     messages = "".join(

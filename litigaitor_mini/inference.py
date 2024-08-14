@@ -5,30 +5,17 @@ from transformers import (
     BitsAndBytesConfig,
 )
 
-from utils import load_config
+from litigaitor_mini.utils import load_model_and_tokenizer
 
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
-config = load_config("../configs/model_config.yml")
-
-model_repo = config["FINETUNED_MODEL_REPO"]
-original_model = config["ORIGINAL_MODEL_REPO"]
-
-
-bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True,
-    bnb_4bit_quant_type="nf4",
-    bnb_4bit_compute_dtype=torch.bfloat16,
+model, tokenizer, device = load_model_and_tokenizer(
+    config_path="../configs/model_config.yml"
 )
-model = AutoModelForCausalLM.from_pretrained(
-    model_repo, quantization_config=bnb_config, adapter_kwargs={"revision": "main"}
-)
-tokenizer = AutoTokenizer.from_pretrained(original_model)
 model.eval()
 
 # model.disable_adapters()
 
 
-def simple_completion(text:str, max_length:int=100)-> str:
+def simple_completion(text: str, max_length: int = 100) -> str:
     input_ids = tokenizer.encode(text, return_tensors="pt").to(device)
     output = model.generate(input_ids, max_length=max_length)
     return tokenizer.decode(output[0], skip_special_tokens=False)

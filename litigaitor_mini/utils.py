@@ -1,7 +1,7 @@
 import os
 import re
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Tuple, Any
 
 import torch
 import yaml
@@ -37,7 +37,7 @@ def format_message_phi(user_message: str, system_message: Optional[str] = None) 
     return f"\n<|user|>\n{user_message}<|end|>\n<|assistant|>\n"
 
 
-def load_model_and_tokenizer(config_path: str = "./configs/model_config.yml") -> tuple:
+def load_model_and_tokenizer(config_path: str = "./configs/model_config.yml") -> Tuple[Any, Any, str]:
     device = "cuda:0" if torch.cuda.is_available() else "cpu"
     config = load_config(config_path)
 

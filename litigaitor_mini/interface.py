@@ -40,7 +40,10 @@ class StopOnTokens(StoppingCriteria):
 
 def predict(message, history):
     print(history)
-    rag_suffix = rag.generate_suffix_prompt(message, top_k=3)
+    if not history:
+        rag_suffix = rag.generate_suffix_prompt(message, top_k=3)
+    else:
+        rag_suffix = ""
     history_transformer_format = history + [[message + rag_suffix, ""]]
     stop = StopOnTokens()
 

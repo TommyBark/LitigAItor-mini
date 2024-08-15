@@ -44,6 +44,5 @@ def fine_tuning_flow(config_path: str) -> None:
         update_config_task(config_path, "dataset_sha", new_version)
 
 
-# Run the flow locally
 if __name__ == "__main__":
     fine_tuning_flow(config_path=dataset_config_path)

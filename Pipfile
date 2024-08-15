@@ -15,6 +15,7 @@ autoawq = "*"
 bitsandbytes = "*"
 gradio = "*"
 prefect = "*"
+pypdf = "*"
 
 [dev-packages]
 ipykernel = "*"

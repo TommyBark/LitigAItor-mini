@@ -4,9 +4,9 @@ from typing import Tuple
 import yaml
 from huggingface_hub import HfApi
 from prefect import flow, task
-from utils import update_config
 
-dataset_config_path = "../configs/dataset_config.yml"
+from litigaitor_mini.config import DATASET_CONFIG_PATH as dataset_config_path
+from litigaitor_mini.utils import update_config
 
 
 @task
@@ -23,7 +23,7 @@ def check_for_update(dataset_name: str, last_version: str) -> Tuple[bool, str]:
 
 @task
 def trigger_finetuning() -> None:
-    subprocess.run(["python", "finetuning.py"], check=True)
+    subprocess.run(["python", "../finetuning.py"], check=True)
 
 
 @task

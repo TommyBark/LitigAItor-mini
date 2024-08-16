@@ -16,6 +16,8 @@ bitsandbytes = "*"
 gradio = "*"
 prefect = "*"
 pypdf = "*"
+boto3 = "*"
+python-dotenv = "*"
 
 [dev-packages]
 ipykernel = "*"

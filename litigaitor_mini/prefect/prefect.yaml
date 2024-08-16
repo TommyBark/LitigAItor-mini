@@ -24,7 +24,7 @@ deployments:
   version: null
   tags: []
   description: null
-  entrypoint: litigaitor_mini/prefect/rag_flow.py:rag_s3_flow
+  entrypoint: ./litigaitor_mini/prefect/rag_flow.py:rag_s3_flow
   parameters: {}
   work_pool:
     name: my-managed-pool

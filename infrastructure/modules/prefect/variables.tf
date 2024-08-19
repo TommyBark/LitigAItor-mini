@@ -59,3 +59,8 @@ variable "vpc_id" {
   description = "The VPC ID where the EC2 instance will be deployed"
   type        = string
 }
+
+variable "worker_instance_type" {
+  description = "The instance type for the Prefect worker EC2 instance"
+  default     = "t2.micro"
+}

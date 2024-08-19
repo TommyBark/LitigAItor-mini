@@ -30,3 +30,8 @@ output "prefect_server_public_ip" {
   description = "The public IP address of the Prefect Orion server"
   value       = module.prefect.prefect_server_public_ip
 }
+
+output "prefect_worker_public_ip" {
+  description = "The public IP address of the Prefect worker"
+  value       = module.prefect.prefect_worker_public_ip
+}

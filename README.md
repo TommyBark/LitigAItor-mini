@@ -56,7 +56,7 @@ Additionally they can also upload their documents and ask about details about th
 
 To run everything you need accounts for AWS, Runpod.io and Huggingface.co
 
-- To work on the app functionality don't forget to first run `pipenv install --dev` and `pre-commit install`
+- To work on the app functionality don't forget to first run `pipenv install --dev`, `pre-commit install` and `pip install -e .`
 - Configs locations and temporary environment variables can be put into `.env`
 - Make sure that you setup AWS credentials by running `aws configure` and that Terraform is installed
   

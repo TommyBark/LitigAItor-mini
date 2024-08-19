@@ -43,7 +43,7 @@ _LitigAItor_ is a fullstack app featuring a helpful chatbot model specialized in
 |-----------------|---------|--------------------------------|
 |Unit Tests| 🚧 WIP | Simple chatbot tests |
 | Integration Tests| ❌ Not Started  | |
-| Linter and/or Code Formatter |🚧 WIP | |
+| Linter and/or Code Formatter |✅ Done | In pre-commit|
 | Makefile| ❌ Not Started   | |
 | pre-commit | ✅ Done | |
 | CI/CD pipeline | ❌ Not Started | |

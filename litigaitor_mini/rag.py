@@ -49,6 +49,10 @@ class RAGDummy(RAG):
             if file.endswith(".txt"):
                 with open(os.path.join(self.documents_path, file), "r") as f:
                     self.documents[file] = f.read()
+    
+    def generate_random_documents(self, n: int = 3):
+        for i in range(n):
+            self.add_document(f"random_{i}.txt", f"Random document {i}")
 
     def search(self, query: str, top_k: int = 3):
         return list(self.documents.values())[:top_k]

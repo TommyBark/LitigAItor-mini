@@ -24,7 +24,7 @@ model.eval()
 # model.disable_adapters()
 
 rag = RAGDummy(config["RAG_SUFFIX"])
-rag.load_documents()
+rag.generate_random_documents()
 
 
 class StopOnTokens(StoppingCriteria):

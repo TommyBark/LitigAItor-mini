@@ -21,8 +21,8 @@ _LitigAItor_ is a fullstack app featuring a helpful chatbot model specialized in
 |-----------------|---------|--------------------------------|
 | Finetuning scripts      | ✅ Done | |
 | Chat interface       | ✅ Done  | Using Gradio     |
-|Dockerfile for deployment| ✅ Done | | 
-| Experiment Tracking & Model Registry |  🚧 WIP | | 
+|Dockerfile for deployment| ✅ Done | |
+| Experiment Tracking & Model Registry |  🚧 WIP | |
 | Grafana  | ❌ Not Started  |
 | Benchmarking model | 🚧 WIP | Using LegalBench |
 |Workflow orchestration| 🚧 WIP | Only examples of workflows |
@@ -35,7 +35,7 @@ _LitigAItor_ is a fullstack app featuring a helpful chatbot model specialized in
 | Prefect Server | ✅ Done | |
 | Prefect Workers       | 🚧 WIP   | Currently only simple EC2 worker   |
 | Chat Interface | 🚧 WIP | Manually deployed on Runpod |
-| Grafana | ❌ Not Started | | 
+| Grafana | ❌ Not Started | |
 
 
 ### Best practices
@@ -43,10 +43,10 @@ _LitigAItor_ is a fullstack app featuring a helpful chatbot model specialized in
 |-----------------|---------|--------------------------------|
 |Unit Tests| 🚧 WIP | Simple chatbot tests |
 | Integration Tests| ❌ Not Started  | |
-| Linter and/or Code Formatter |🚧 WIP | |  
+| Linter and/or Code Formatter |🚧 WIP | |
 | Makefile| ❌ Not Started   | |
-| pre-commit | 🚧 WIP | |
-| CI/CD pipeline | ❌ Not Started | | 
+| pre-commit | ✅ Done | |
+| CI/CD pipeline | ❌ Not Started | |
 
 ## How to run
 
@@ -55,8 +55,8 @@ To run everything you need following:
 - Runpod.io Account
 - Huggingface.co Account
 
-Make sure that you setup AWS credentials by running `aws configure` and that Terraform is installed
-
+- To work with the app functionality don't forget to first run `pipenv install --dev` and `pre-commit install`
+- Make sure that you setup AWS credentials by running `aws configure` and that Terraform is installed
 ### MLflow deployment
 
 1. Set DB passowrd by running `export TF_VAR_mlflow_db_password=<password>`
@@ -71,9 +71,9 @@ Make sure that you setup AWS credentials by running `aws configure` and that Ter
 
 1. Get a pod from Runpod.io with at least 8GB of GPU VRAM and 25GB of storage
 2. Make sure it has public IP and exposed http port.
-3. Set up the password for the app by setting envvar `GRADIO_PASSWORD`  
+3. Set up the password for the app by setting envvar `GRADIO_PASSWORD`
 4. SSH into the pod and copy `/infrastructure/runpod/runpod_script.sh`
-5. Run 
+5. Run
   ```bash
   chmod +x runpod_script.sh
   ./runpod_script.sh
@@ -81,4 +81,3 @@ Make sure that you setup AWS credentials by running `aws configure` and that Ter
 6. To access the app from anywhere use url `https://[your-pod-id]-[exposed-http-port].proxy.runpod.net/` for example `https://aco6ex0fp2hqrq-8080.proxy.runpod.net/`
 
 Alternatively you can use `Dockerfile` to build and push the image to docker.io where you can reuse it in the Runpod.
-

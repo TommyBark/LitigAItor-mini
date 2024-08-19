@@ -78,5 +78,7 @@ Make sure that you setup AWS credentials by running `aws configure` and that Ter
   chmod +x runpod_script.sh
   ./runpod_script.sh
   ```
+6. To access the app from anywhere use url `https://[your-pod-id]-[exposed-http-port].proxy.runpod.net/` for example `https://aco6ex0fp2hqrq-8080.proxy.runpod.net/`
 
 Alternatively you can use `Dockerfile` to build and push the image to docker.io where you can reuse it in the Runpod.
+

@@ -1,9 +1,0 @@
-services:
-  localstack:
-    image: localstack/localstack
-    ports:
-      - "4566:4566"
-    environment:
-      - SERVICES=s3,kinesis,lambda, dynamodb,ec2, vpc
-      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN}
-      - DEBUG=1

@@ -15,14 +15,3 @@ else:
     MODEL_CONFIG_PATH = os.getenv("MODEL_CONFIG_PATH")
 FINETUNE_CONFIG_PATH = os.getenv("FINETUNE_CONFIG_PATH")
 DATASET_CONFIG_PATH = os.getenv("DATASET_CONFIG_PATH")
-
-
-import os
-from prefect import flow, task
-
-
-@flow(log_prints=True)
-def rag_s3_flow(bucket: str, file_key: str) -> None:
-    print(os.getcwd())
-
-#rag_s3_flow.serve(name="s3-triggered-rag-update")

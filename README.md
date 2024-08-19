@@ -1,6 +1,9 @@
 # LitigAItor-mini
 
-_LitigAItor_ is a fullstack app featuring a helpful chatbot model specialized in law (based on _Phi-3-mini_).
+_LitigAItor_ is a fullstack app featuring a helpful chatbot model specialized in law (based on _Phi-3-mini_). 
+
+Users can chat and ask about specific law interpretation or about precedent cases in the history of US law. 
+Additionally they can also upload their documents and ask about details about them.
 
 ## Features
 
@@ -19,8 +22,9 @@ _LitigAItor_ is a fullstack app featuring a helpful chatbot model specialized in
 ### App
 | Feature         | State   | Comment                        |
 |-----------------|---------|--------------------------------|
-| Finetuning scripts      | ✅ Done | |
+| Finetuning scripts      | ✅ Done | Finetuned on a micro subset of data |
 | Chat interface       | ✅ Done  | Using Gradio     |
+|RAG and file upload| 🚧 WIP | RAG placeholder, no upload yet |
 |Dockerfile for deployment| ✅ Done | |
 | Experiment Tracking & Model Registry |  🚧 WIP | |
 | Grafana  | ❌ Not Started  |
@@ -77,6 +81,6 @@ To run everything you need accounts for AWS, Runpod.io and Huggingface.co
   chmod +x runpod_script.sh
   ./runpod_script.sh
   ```
-6. To access the app from anywhere use url `https://[your-pod-id]-[exposed-http-port].proxy.runpod.net/` for example `https://aco6ex0fp2hqrq-8080.proxy.runpod.net/`
+6. To access the app from anywhere use url `https://[your-pod-id]-[exposed-http-port].proxy.runpod.net/` for example `https://aco6ex0fp2hqrq-8080.proxy.runpod.net/` , use username `user` and password that was setup earlier.
 
 Alternatively you can use `Dockerfile` to build and push the image to docker.io where you can reuse it in the Runpod.

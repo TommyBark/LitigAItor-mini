@@ -1,8 +1,10 @@
 import importlib.util
+import os
 from contextlib import nullcontext
 
 import torch
 from dataset import create_datasets
+from dotenv import dotenv_values
 from peft import (
     LoraConfig,
     TaskType,
@@ -18,11 +20,10 @@ from transformers import (
 from trl import SFTTrainer
 from utils import ProfilerCallback, get_latest_checkpoint, load_config, update_config
 
-finetuning_config_path = "../configs/finetune_config.yml"
-data_config_path = "../configs/dataset_config.yml"
+from litigaitor_mini.config import DATASET_CONFIG_PATH, FINETUNE_CONFIG_PATH
 
-config = load_config(finetuning_config_path)
-data_config = load_config(data_config_path)
+config = load_config(FINETUNE_CONFIG_PATH)
+data_config = load_config(DATASET_CONFIG_PATH)
 
 DEBUG = config["DEBUG"]
 

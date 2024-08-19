@@ -1,5 +1,6 @@
 module "base" {
   source       = "../modules/aws-base"
+
   project_name = "LitigAItor-mini"
   region       = "eu-west-1"
   vpc_cidr             = "10.0.0.0/16"
@@ -16,7 +17,7 @@ module "mlflow" {
   instance_type = "t2.micro"
   ami_id = "ami-0c38b837cd80f13bb"
 
-  # networking
+  # Networking
   subnet_id = module.base.public_subnet_ids[0]
   vpc_id = module.base.vpc_id
   vpc_cidr = module.base.vpc_cidr

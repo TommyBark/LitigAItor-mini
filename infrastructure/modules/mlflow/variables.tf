@@ -45,7 +45,7 @@ variable "public_key_path" {
   type        = string
 }
 
-variable "cidr_blocks" {
+variable "ingress_cidr_blocks" {
   description = "List of allowed IPs for the security group"
   type        = list(string)
   default = ["0.0.0.0/0"]

@@ -8,7 +8,7 @@ resource "aws_security_group" "mlflow_ec2_sg" {
     from_port   = 5000
     to_port     = 5000
     protocol    = "tcp"
-    cidr_blocks = var.cidr_blocks
+    cidr_blocks = var.ingress_cidr_blocks
   }
 
   ingress {
@@ -16,7 +16,7 @@ resource "aws_security_group" "mlflow_ec2_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = var.cidr_blocks
+    cidr_blocks = var.ingress_cidr_blocks
   }
 
   egress {

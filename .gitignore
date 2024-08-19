@@ -12,6 +12,9 @@ tmp/
 # Data files
 documents/
 
+# Local files
+*.pem
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

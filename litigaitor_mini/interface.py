@@ -1,25 +1,23 @@
 from threading import Thread
 
+import dotenv_
 import gradio as gr
 import torch
 from transformers import (
-    AutoModelForCausalLM,
-    AutoTokenizer,
-    BitsAndBytesConfig,
     StoppingCriteria,
     StoppingCriteriaList,
     TextIteratorStreamer,
 )
 
+from litigaitor_mini.config import GRADIO_PASSWORD, MODEL_CONFIG_PATH
 from litigaitor_mini.rag import RAGDummy
 from litigaitor_mini.utils import load_config, load_model_and_tokenizer
 
-config_path = "../configs/model_config.yml"
-config = load_config(config_path)
+config = load_config(MODEL_CONFIG_PATH)
 
 system_message = config["SYSTEM_MESSAGE"]
 
-model, tokenizer, device = load_model_and_tokenizer(config_path)
+model, tokenizer, device = load_model_and_tokenizer(MODEL_CONFIG_PATH)
 model.eval()
 # model.disable_adapters()
 
@@ -84,5 +82,7 @@ def predict(message, history):
             partial_message += new_token
             yield partial_message
 
-
-gr.ChatInterface(predict).launch(share=True)
+if config["DEPLOY"]:
+    gr.ChatInterface(predict).launch(share=False,server_name="0.0.0.0", server_port=8888,auth=("user", GRADIO_PASSWORD))
+else:
+    gr.ChatInterface(predict).launch(share=True)

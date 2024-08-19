@@ -50,13 +50,12 @@ _LitigAItor_ is a fullstack app featuring a helpful chatbot model specialized in
 
 ## How to run
 
-To run everything you need following:
-- AWS Account
-- Runpod.io Account
-- Huggingface.co Account
+To run everything you need accounts for AWS, Runpod.io and Huggingface.co
 
-- To work with the app functionality don't forget to first run `pipenv install --dev` and `pre-commit install`
+- To work on the app functionality don't forget to first run `pipenv install --dev` and `pre-commit install`
+- Configs locations and temporary environment variables can be put into `.env`
 - Make sure that you setup AWS credentials by running `aws configure` and that Terraform is installed
+  
 ### MLflow deployment
 
 1. Set DB passowrd by running `export TF_VAR_mlflow_db_password=<password>`

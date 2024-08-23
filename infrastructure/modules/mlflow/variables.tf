@@ -50,3 +50,8 @@ variable "ingress_cidr_blocks" {
   type        = list(string)
   default = ["0.0.0.0/0"]
 }
+
+variable "artifact_bucket_name" {
+  description = "The name of the S3 bucket to create for MLflow artifacts"
+  type        = string
+}

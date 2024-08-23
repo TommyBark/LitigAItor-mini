@@ -77,13 +77,21 @@ module "mlflow_tracking_server" {
   vpc_security_group_ids = [aws_security_group.mlflow_ec2_sg.id]
   iam_instance_profile   = aws_iam_instance_profile.mlflow_ec2_profile.name
   key_name      = aws_key_pair.mlflow_key_pair.key_name
-  user_data = file("${path.module}/user_data.sh")
+  user_data = templatefile("${path.module}/user_data.tftpl",
+    {
+      bucket_regional_domain_name = module.mlflow_artifact_store.bucket_regional_domain_name,
+      db_instance_username = module.mlflow_db.db_instance_username,
+      mlflow_backend_password = var.mlflow_backend_password,
+      db_instance_endpoint = module.mlflow_db.db_instance_endpoint,
+      db_instance_name = module.mlflow_db.db_instance_name,
+      bucket_id = module.mlflow_artifact_store.bucket_id
+    })
 }
 
 # S3 bucket for MLflow artifact store
 module "mlflow_artifact_store" {
   source        = "../s3"
-  bucket_name   = "my-mlflow-artifacts-mlops2"
+  bucket_name   = var.artifact_bucket_name
   force_destroy = true
   tags = {
     Environment = "Production"

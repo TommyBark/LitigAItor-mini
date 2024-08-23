@@ -8,10 +8,10 @@ source mlflow-env/bin/activate
 pip3 install --upgrade pip
 pip3 install mlflow psycopg2-binary boto3 setuptools
 echo "Setting up MLFlow env vars"
-export MLFLOW_S3_ENDPOINT_URL=https://${module.mlflow_artifact_store.bucket_regional_domain_name}
-export MLFLOW_TRACKING_URI=postgresql://${module.mlflow_db.db_instance_username}:${var.mlflow_backend_password}@${module.mlflow_db.db_instance_endpoint}/${module.mlflow_db.db_instance_name}
+export MLFLOW_S3_ENDPOINT_URL=https://${bucket_regional_domain_name}
+export MLFLOW_TRACKING_URI=postgresql://${db_instance_username}:${mlflow_backend_password}@${db_instance_endpoint}/${db_instance_name}
 nohup mlflow server \
 --backend-store-uri $MLFLOW_TRACKING_URI \
---default-artifact-root s3://${module.mlflow_artifact_store.bucket_id}/ \
+--default-artifact-root s3://${bucket_id}/ \
 --host 0.0.0.0 \
 > mlflow.log 2>&1 &

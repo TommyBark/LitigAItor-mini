@@ -11,7 +11,7 @@ module "base" {
 
 module "mlflow" {
   source = "../modules/mlflow"
-  
+
   #EC2
   name = "mlflow-prod"
   instance_type = "t2.micro"
@@ -26,6 +26,8 @@ module "mlflow" {
   # DB
   mlflow_backend_password = var.mlflow_db_password
 
+  # Artifact bucket
+  artifact_bucket_name = "mlflow-litigator-mlflow-artifacts"
   # SSH authentication
   public_key_path = "~/.ssh/mlflow_key.pub"
 
@@ -38,4 +40,3 @@ output "mlflow_tracking_uri" {
 output "mlflow_s3_artifact_uri" {
   value = module.mlflow.mlflow_s3_artifact_uri
 }
-

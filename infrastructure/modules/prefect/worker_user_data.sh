@@ -15,8 +15,8 @@ pip3 install prefect==2.20.2
 # Set Prefect API URL
 echo 'export PREFECT_API_URL="${prefect_api_url}"' >> /home/ubuntu/.bashrc
 export PREFECT_API_URL="${prefect_api_url}"
-# sleep for 5 mins to make sure prefect server is up
-sleep 300
+# sleep for 2 mins to make sure prefect server is up
+sleep 120
 nohup prefect worker start -q default -p EC2 > /home/ubuntu/worker.log 2>&1 &
 # Start Prefect worker
 # sudo -u ubuntu bash << EOF

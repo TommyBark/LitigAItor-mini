@@ -18,11 +18,5 @@ export PREFECT_API_URL="${prefect_api_url}"
 # sleep for 2 mins to make sure prefect server is up
 sleep 120
 nohup prefect worker start -q default -p EC2 > /home/ubuntu/worker.log 2>&1 &
-# Start Prefect worker
-# sudo -u ubuntu bash << EOF
-# source prefect-env/bin/activate
-# sleep 60
-# nohup prefect worker start -q default -p EC2 > /home/ubuntu/worker.log 2>&1 &
-# EOF
 
 echo "Prefect worker setup complete"
